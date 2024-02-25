@@ -1,26 +1,66 @@
-use rodio::source::{SineWave, Source};
-use rodio::{Decoder, OutputStream, Sink};
-use std::fs::File;
+use rodio::{OutputStream, OutputStreamHandle, Sink, Source};
+use rustler::{Env, ResourceArc, Term};
+
 use std::io::BufReader;
-use std::time::Duration;
+use std::sync::Mutex;
 
-#[rustler::nif]
-fn play_sound() {
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let sink = Sink::try_new(&stream_handle).unwrap();
+struct StreamHandles{
+    pub _stream: OutputStream,
+    pub handle: OutputStreamHandle
 
-    // Add a dummy source of the sake of the example.
-    let source = SineWave::new(440.0)
-        .take_duration(Duration::from_secs_f32(0.5))
-        .amplify(0.20);
-    sink.append(source);
+}
 
-    sink.sleep_until_end();
+struct Container {
+    pub mux: Mutex<StreamHandles>,
+}
+
+struct AudioStream {
+    sink: Sink
+}
+
+// Trust me bro
+unsafe impl Send for StreamHandles {}
+
+fn load(env: Env, _: Term) -> bool {
+    rustler::resource!(Container, env);
+    rustler::resource!(AudioStream, env);
+    true
 }
 
 #[rustler::nif]
-fn add(a: i64, b: i64) -> i64 {
-    a + b
+fn start() -> ResourceArc<Container> {
+    let (stream, handle) = OutputStream::try_default().unwrap();
+
+    ResourceArc::new(Container {
+        mux: Mutex::new(StreamHandles {
+            _stream: stream,
+            handle,
+        }),
+    })
 }
 
-rustler::init!("Elixir.AudioBridge", [add, play_sound]);
+#[rustler::nif]
+fn play_file(handles: ResourceArc<Container>, file_path: &str) -> ResourceArc<AudioStream>{
+    let handle = &handles.mux.try_lock().unwrap().handle;
+    let file = std::fs::File::open(file_path).unwrap();
+    let audio = rodio::Decoder::new(BufReader::new(file)).unwrap().repeat_infinite();
+    
+    let sink = rodio::Sink::try_new(handle).unwrap();
+    sink.append(audio);
+
+    ResourceArc::new(AudioStream {
+        sink
+    })
+}
+
+#[rustler::nif]
+fn set_stream_parameters(stream: ResourceArc<AudioStream>, speed: f32, volume: f32) -> ResourceArc<AudioStream>{
+    stream.sink.set_speed(speed);
+    stream.sink.set_volume(volume);
+
+    stream
+}
+
+
+
+rustler::init!("Elixir.AudioBridge", [start, play_file, set_stream_parameters], load = load);

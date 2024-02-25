@@ -11,9 +11,7 @@ defmodule DomeRadio.Application do
       DomeRadioWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:dome_radio, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: DomeRadio.PubSub},
-      # Start a worker by calling: DomeRadio.Worker.start_link(arg)
-      # {DomeRadio.Worker, arg},
-      # Start to serve requests, typically the last entry
+      DomeRadio.Controller,
       DomeRadioWeb.Endpoint
     ]
 
