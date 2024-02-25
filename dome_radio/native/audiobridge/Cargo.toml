@@ -1,0 +1,14 @@
+[package]
+name = "audiobridge"
+version = "0.1.0"
+authors = []
+edition = "2021"
+
+[lib]
+name = "audiobridge"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rodio = "0.17.3"
+rustler = "0.31.0"
