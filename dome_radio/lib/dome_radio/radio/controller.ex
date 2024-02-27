@@ -1,5 +1,6 @@
 defmodule DomeRadio.Controller do
   use GenServer
+  import Logger
 
   @audio_files [
     "1.mp3",
@@ -19,6 +20,7 @@ defmodule DomeRadio.Controller do
 
   @impl true
   def handle_info({:init}, state) do
+    info("Running init")
     case AudioBridge.start() do
       {:error, _err} ->
         Process.send_after(__MODULE__, {:init}, 100)

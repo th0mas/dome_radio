@@ -2,7 +2,7 @@ use rodio::{OutputStream, OutputStreamHandle, Sink, Source};
 use rustler::{Env, Error, ResourceArc, Term};
 
 use std::io::BufReader;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 mod atoms {
     rustler::atoms! {
@@ -14,11 +14,11 @@ mod atoms {
 }
 
 struct StreamHandles {
-    pub _stream: OutputStream,
     pub handle: OutputStreamHandle,
+    _stream: Arc<OutputStream>
 }
 
-struct Container {
+struct Container{
     pub mux: Mutex<StreamHandles>,
 }
 
@@ -38,11 +38,10 @@ fn load(env: Env, _: Term) -> bool {
 #[rustler::nif]
 fn start() -> Result<ResourceArc<Container>, Error> {
     let result = OutputStream::try_default();
-
     match result {
         Ok((stream, handle)) => Ok(ResourceArc::new(Container {
             mux: Mutex::new(StreamHandles {
-                _stream: stream,
+                _stream: Arc::new(stream),
                 handle,
             }),
         })),
@@ -52,7 +51,7 @@ fn start() -> Result<ResourceArc<Container>, Error> {
 
 #[rustler::nif]
 fn play_file(handles: ResourceArc<Container>, file_path: &str) -> ResourceArc<AudioStream> {
-    let handle = &handles.mux.try_lock().unwrap().handle;
+    let handle = &handles.mux.lock().unwrap().handle;
     let file = std::fs::File::open(file_path).unwrap();
     let audio = rodio::Decoder::new(BufReader::new(file))
         .unwrap()
