@@ -34,7 +34,6 @@ fn load(env: Env, _: Term) -> bool {
     rustler::resource!(AudioStream, env);
     true
 }
-
 #[rustler::nif]
 fn start() -> Result<ResourceArc<Container>, Error> {
     let result = OutputStream::try_default();

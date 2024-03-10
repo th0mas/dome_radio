@@ -13,9 +13,18 @@ defmodule DomeRadioFirmware.Application do
 
     children =
       [
-        # Children for all targets
-        # Starts a worker by calling: DomeRadioFirmware.Worker.start_link(arg)
-        # {DomeRadioFirmware.Worker, arg},
+        %{
+          id: DomeRadioFirmware.InputDriverOne,
+          start:
+            {DomeRadioFirmware.Inputs, :start_link,
+             [%{spi: "spidev0.0", channels: Enum.to_list(0..7)}]}
+        },
+        %{
+          id: DomeRadioFirmware.InputDriverTwo,
+          start:
+            {DomeRadioFirmware.Inputs, :start_link,
+             [%{spi: "spidev0.1", channels: Enum.to_list(7..15)}]}
+        }
       ] ++ children(target())
 
     Supervisor.start_link(children, opts)

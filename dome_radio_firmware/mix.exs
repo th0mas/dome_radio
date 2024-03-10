@@ -47,6 +47,10 @@ defmodule DomeRadioFirmware.MixProject do
       {:ring_logger, "~> 0.10.0"},
       {:toolshed, "~> 0.3.0"},
 
+      {:circuits_spi, "~> 2.0"},
+      {:phoenix_pubsub, "~> 2.0"},
+
+
       {:dome_radio, path: '../dome_radio', targets: @all_targets, env: Mix.env()},
 
       # Allow Nerves.Runtime on host to support development, testing and CI.

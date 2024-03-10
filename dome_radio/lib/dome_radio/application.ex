@@ -8,11 +8,7 @@ defmodule DomeRadio.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      DomeRadioWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:dome_radio, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: DomeRadio.PubSub},
       DomeRadio.Controller,
-      DomeRadioWeb.Endpoint
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -21,11 +17,5 @@ defmodule DomeRadio.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
-  @impl true
-  def config_change(changed, _new, removed) do
-    DomeRadioWeb.Endpoint.config_change(changed, removed)
-    :ok
-  end
+
 end
